@@ -2101,17 +2101,15 @@
   <script type="importmap">
     {
       "imports": {
-        "three": "/node_modules/three/build/three.module.js",
-        "topojson-client": "/node_modules/topojson-client/src/index.js",
-        "d3-geo": "/node_modules/d3-geo/src/index.js",
-        "d3-array": "/node_modules/d3-array/src/index.js",
-        "internmap": "/node_modules/internmap/src/index.js"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+        "topojson-client": "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm",
+        "d3-geo": "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm"
       }
     }
   </script>
   <script type="module">
-    import * as THREE from "/node_modules/three/build/three.module.js";
-    import { OrbitControls } from "/node_modules/three/examples/jsm/controls/OrbitControls.js";
+    import * as THREE from "three";
+    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/controls/OrbitControls.js";
     import { feature } from "topojson-client";
     import { geoEquirectangular, geoGraticule10, geoPath } from "d3-geo";
 
@@ -3059,7 +3057,7 @@
 
     async function loadAccurateMap() {
       try {
-        const countryResponse = await fetch("/public/data/shapes/countries-10m.json");
+        const countryResponse = await fetch("public/data/shapes/countries-10m.json");
         if (!countryResponse.ok) throw new Error("Map request failed");
         const countryTopology = await countryResponse.json();
         const countries = feature(countryTopology, countryTopology.objects.countries);
@@ -3078,8 +3076,8 @@
     async function loadGameData() {
       if (gameData.loaded) return gameData;
       const [countriesResponse, statesResponse] = await Promise.all([
-        fetch("/public/data/metadata/countries.json"),
-        fetch("/public/data/metadata/states.json")
+        fetch("public/data/metadata/countries.json"),
+        fetch("public/data/metadata/states.json")
       ]);
       if (!countriesResponse.ok || !statesResponse.ok) throw new Error("Game data request failed");
       const [countries, states] = await Promise.all([
@@ -4114,7 +4112,7 @@
 
       if (mode.visual === "flag" && target.flagCode) {
         const img = document.createElement("img");
-        img.src = `/public/data/flags/${target.flagCode}.svg`;
+        img.src = `public/data/flags/${target.flagCode}.svg`;
         img.alt = "Country flag";
         if (state.difficulty === "hard") img.style.filter = "grayscale(1) contrast(1.08)";
         answerVisual.appendChild(img);
