@@ -3071,9 +3071,12 @@
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     const MAX_RENDER_PIXEL_RATIO = 3;
     const MOBILE_RENDER_PIXEL_RATIO = 2;
+    const MOBILE_GLOBE_TEXTURE_WIDTH = 4096;
+    const DESKTOP_GLOBE_TEXTURE_WIDTH = 8192;
     const GLOBE_GEOMETRY_WIDTH_SEGMENTS = 192;
     const GLOBE_GEOMETRY_HEIGHT_SEGMENTS = 128;
-    const GLOBE_TEXTURE_WIDTH = Math.max(2048, Math.min(8192, renderer.capabilities.maxTextureSize || 8192));
+    const preferredGlobeTextureWidth = isMobileViewport() ? MOBILE_GLOBE_TEXTURE_WIDTH : DESKTOP_GLOBE_TEXTURE_WIDTH;
+    const GLOBE_TEXTURE_WIDTH = Math.max(2048, Math.min(preferredGlobeTextureWidth, renderer.capabilities.maxTextureSize || preferredGlobeTextureWidth));
     const GLOBE_TEXTURE_HEIGHT = GLOBE_TEXTURE_WIDTH / 2;
     renderer.setPixelRatio(renderPixelRatio());
     renderer.outputColorSpace = THREE.SRGBColorSpace;
