@@ -1829,7 +1829,7 @@
   <main id="app">
     <section class="splash-screen" id="splashScreen" aria-label="Loading MapIQ">
       <div class="splash-card">
-        <img src="map_iq_logo.png" alt="" loading="eager" decoding="sync" fetchpriority="high">
+        <img src="map_iq_logo.png" alt="" loading="eager" decoding="async" fetchpriority="high">
         <strong>MapIQ</strong>
       </div>
     </section>
@@ -2681,7 +2681,8 @@
     };
     const CESIUM_EARTH_RADIUS_METERS = 6378137;
     const CESIUM_MIN_DRAG_DEGREES_PER_VIEWPORT = 1.5;
-    const CESIUM_MAX_RESOLUTION_SCALE = 2.5;
+    const CESIUM_MOBILE_MAX_RESOLUTION_SCALE = 1.4;
+    const CESIUM_DESKTOP_MAX_RESOLUTION_SCALE = 2;
     const cesiumMarkers = [];
 
     function initCesiumGlobe() {
@@ -2730,8 +2731,8 @@
         cesiumViewer.scene.globe.baseColor = new Cesium.Color(0, 0, 0, 0);
         cesiumViewer.scene.globe.enableLighting = false;
         cesiumViewer.scene.globe.depthTestAgainstTerrain = true;
-        cesiumViewer.scene.globe.maximumScreenSpaceError = 1;
-        if (cesiumViewer.scene.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = false;
+        cesiumViewer.scene.globe.maximumScreenSpaceError = window.innerWidth <= 760 ? 2.5 : 1.5;
+        if (cesiumViewer.scene.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = window.innerWidth <= 760;
         const controller = cesiumViewer.scene.screenSpaceCameraController;
         controller.enableRotate = false;
         controller.enableTranslate = false;
@@ -2772,7 +2773,11 @@
     function applyCesiumRenderQuality() {
       if (!cesiumViewer) return;
       if ("useBrowserRecommendedResolution" in cesiumViewer) cesiumViewer.useBrowserRecommendedResolution = false;
-      cesiumViewer.resolutionScale = Math.min(window.devicePixelRatio || 1, CESIUM_MAX_RESOLUTION_SCALE);
+      const isMobile = window.innerWidth <= 760;
+      const maxScale = isMobile ? CESIUM_MOBILE_MAX_RESOLUTION_SCALE : CESIUM_DESKTOP_MAX_RESOLUTION_SCALE;
+      cesiumViewer.resolutionScale = Math.min(window.devicePixelRatio || 1, maxScale);
+      if (cesiumViewer.scene?.globe) cesiumViewer.scene.globe.maximumScreenSpaceError = isMobile ? 2.5 : 1.5;
+      if (cesiumViewer.scene?.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = isMobile;
     }
 
     function activateCesiumGlobe() {
