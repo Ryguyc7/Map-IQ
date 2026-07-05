@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "countries": "metadata/countries.json",
+    "states": "metadata/states.json"
+  },
+  "shapes": {
+    "countries110m": "shapes/countries-110m.json",
+    "countries50m": "shapes/countries-50m.json",
+    "countries10m": "shapes/countries-10m.json",
+    "usStates10m": "shapes/us-states-10m.json",
+    "usCounties10m": "shapes/us-counties-10m.json"
+  },
+  "flags": {
+    "index": "flag-index.json",
+    "directory": "flags/",
+    "format": "svg",
+    "key": "ISO 3166-1 alpha-2 lowercase where available"
+  },
+  "sources": [
+    {
+      "name": "Countries States Cities Database",
+      "url": "https://github.com/dr5hn/countries-states-cities-database",
+      "license": "ODbL-1.0",
+      "files": [
+        "metadata/countries.json",
+        "metadata/states.json"
+      ]
+    },
+    {
+      "name": "World Atlas",
+      "url": "https://github.com/topojson/world-atlas",
+      "license": "ISC",
+      "files": [
+        "shapes/countries-110m.json",
+        "shapes/countries-50m.json",
+        "shapes/countries-10m.json"
+      ]
+    },
+    {
+      "name": "U.S. Atlas",
+      "url": "https://github.com/topojson/us-atlas",
+      "license": "ISC",
+      "files": [
+        "shapes/us-states-10m.json",
+        "shapes/us-counties-10m.json"
+      ]
+    },
+    {
+      "name": "flag-icons",
+      "url": "https://github.com/lipis/flag-icons",
+      "license": "MIT",
+      "files": [
+        "flag-index.json",
+        "flags/*.svg"
+      ]
+    }
+  ]
+}

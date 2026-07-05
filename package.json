@@ -1,0 +1,16 @@
+{
+  "name": "map-iq",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A 3D geography tapping game inspired by MapTap.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "three": "^0.185.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  }
+}
