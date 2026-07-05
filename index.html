@@ -2647,8 +2647,12 @@
         attribution: "Three.js GitHub equirectangular night texture"
       }
     ];
+    function isMobileViewport() {
+      return window.innerWidth <= 760;
+    }
+
     const tileState = {
-      provider: "cesium",
+      provider: isMobileViewport() ? "mapiq-default" : "cesium",
       zoom: 3,
       lat: 20,
       lon: 0,
@@ -2773,7 +2777,7 @@
     function applyCesiumRenderQuality() {
       if (!cesiumViewer) return;
       if ("useBrowserRecommendedResolution" in cesiumViewer) cesiumViewer.useBrowserRecommendedResolution = false;
-      const isMobile = window.innerWidth <= 760;
+      const isMobile = isMobileViewport();
       const maxScale = isMobile ? CESIUM_MOBILE_MAX_RESOLUTION_SCALE : CESIUM_DESKTOP_MAX_RESOLUTION_SCALE;
       cesiumViewer.resolutionScale = Math.min(window.devicePixelRatio || 1, maxScale);
       if (cesiumViewer.scene?.globe) cesiumViewer.scene.globe.maximumScreenSpaceError = isMobile ? 2.5 : 1.5;
@@ -3066,11 +3070,12 @@
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     const MAX_RENDER_PIXEL_RATIO = 3;
+    const MOBILE_RENDER_PIXEL_RATIO = 2;
     const GLOBE_GEOMETRY_WIDTH_SEGMENTS = 192;
     const GLOBE_GEOMETRY_HEIGHT_SEGMENTS = 128;
     const GLOBE_TEXTURE_WIDTH = Math.max(2048, Math.min(8192, renderer.capabilities.maxTextureSize || 8192));
     const GLOBE_TEXTURE_HEIGHT = GLOBE_TEXTURE_WIDTH / 2;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_RENDER_PIXEL_RATIO));
+    renderer.setPixelRatio(renderPixelRatio());
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const scene = new THREE.Scene();
@@ -3128,6 +3133,11 @@
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+
+    function renderPixelRatio() {
+      const cap = isMobileViewport() ? MOBILE_RENDER_PIXEL_RATIO : MAX_RENDER_PIXEL_RATIO;
+      return Math.min(window.devicePixelRatio || 1, cap);
+    }
 
     const mapDataReady = loadAccurateMap();
 
@@ -4638,8 +4648,8 @@
     function resize() {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      DEFAULT_CAMERA = width <= 760 ? MOBILE_CAMERA.clone() : DESKTOP_CAMERA.clone();
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_RENDER_PIXEL_RATIO));
+      DEFAULT_CAMERA = isMobileViewport() ? MOBILE_CAMERA.clone() : DESKTOP_CAMERA.clone();
+      renderer.setPixelRatio(renderPixelRatio());
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -4908,7 +4918,11 @@
     initTileTester();
     resize();
     updateHud();
-    initCesiumGlobe();
+    if (tileState.provider === "cesium") {
+      initCesiumGlobe();
+    } else {
+      activateTextureGlobe();
+    }
     showStartModal();
     if (!useCesiumGlobe && tileState.provider !== "cesium") window.setTimeout(() => applyTileProviderToGlobe(), 300);
     window.setTimeout(hideSplash, 2200);
