@@ -181,14 +181,17 @@
 
     .splash-screen.leaving {
       pointer-events: none;
-      animation: splashFadeOut 280ms ease forwards;
+      animation: splashFadeOut 420ms ease forwards;
     }
 
     .splash-card {
-      display: grid;
-      place-items: center;
-      gap: 12px;
-      animation: splashLogoIn 520ms cubic-bezier(.2,.8,.2,1) both;
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2vw, 24px);
+      padding: 0 24px;
+      animation: splashLogoIn 680ms cubic-bezier(.2,.8,.2,1) both;
     }
 
     .splash-screen.leaving .splash-card {
@@ -196,18 +199,20 @@
     }
 
     .splash-card img {
-      width: 116px;
-      height: 116px;
-      object-fit: cover;
-      filter: drop-shadow(0 24px 54px rgba(0, 0, 0, 0.52));
+      width: clamp(118px, 11vw, 156px);
+      height: clamp(114px, 10.6vw, 150px);
+      object-fit: contain;
+      image-rendering: auto;
+      filter: drop-shadow(0 24px 54px rgba(0, 0, 0, 0.52)) drop-shadow(0 0 22px rgba(56, 232, 255, 0.18));
     }
 
     .splash-card strong {
-      color: var(--aqua);
-      font-size: 1.1rem;
+      color: white;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
       font-weight: 900;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+      letter-spacing: 0;
+      line-height: 1;
+      text-shadow: 0 12px 30px rgba(0, 0, 0, 0.52);
     }
 
     .topbar {
@@ -3996,7 +4001,7 @@
     function hideSplash() {
       if (!splashScreen || splashScreen.classList.contains("hidden")) return;
       splashScreen.classList.add("leaving");
-      window.setTimeout(() => splashScreen.classList.add("hidden"), 280);
+      window.setTimeout(() => splashScreen.classList.add("hidden"), 420);
     }
 
     function runLabel() {
@@ -4816,7 +4821,7 @@
     initCesiumGlobe();
     showStartModal();
     if (!useCesiumGlobe && tileState.provider !== "cesium") window.setTimeout(() => applyTileProviderToGlobe(), 300);
-    window.setTimeout(hideSplash, 900);
+    window.setTimeout(hideSplash, 2200);
     animate();
   </script>
 </body>
