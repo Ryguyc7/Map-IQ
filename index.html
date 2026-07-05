@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MapIQ</title>
   <link rel="icon" type="image/png" href="map_iq_logo.png">
+  <link rel="preload" as="image" href="map_iq_logo.png" fetchpriority="high">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.123/Build/Cesium/Widgets/widgets.css">
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.123/Build/Cesium/Cesium.js"></script>
   <style>
@@ -1828,7 +1829,7 @@
   <main id="app">
     <section class="splash-screen" id="splashScreen" aria-label="Loading MapIQ">
       <div class="splash-card">
-        <img src="map_iq_logo.png" alt="">
+        <img src="map_iq_logo.png" alt="" loading="eager" decoding="sync" fetchpriority="high">
         <strong>MapIQ</strong>
       </div>
     </section>
@@ -2680,6 +2681,7 @@
     };
     const CESIUM_EARTH_RADIUS_METERS = 6378137;
     const CESIUM_MIN_DRAG_DEGREES_PER_VIEWPORT = 1.5;
+    const CESIUM_MAX_RESOLUTION_SCALE = 2.5;
     const cesiumMarkers = [];
 
     function initCesiumGlobe() {
@@ -2710,6 +2712,7 @@
           timeline: false,
           skyAtmosphere: false
         });
+        applyCesiumRenderQuality();
         const imageryLayer = cesiumViewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
           url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
           maximumLevel: 19,
@@ -2727,6 +2730,8 @@
         cesiumViewer.scene.globe.baseColor = new Cesium.Color(0, 0, 0, 0);
         cesiumViewer.scene.globe.enableLighting = false;
         cesiumViewer.scene.globe.depthTestAgainstTerrain = true;
+        cesiumViewer.scene.globe.maximumScreenSpaceError = 1;
+        if (cesiumViewer.scene.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = false;
         const controller = cesiumViewer.scene.screenSpaceCameraController;
         controller.enableRotate = false;
         controller.enableTranslate = false;
@@ -2762,6 +2767,12 @@
         useCesiumGlobe = false;
         return false;
       }
+    }
+
+    function applyCesiumRenderQuality() {
+      if (!cesiumViewer) return;
+      if ("useBrowserRecommendedResolution" in cesiumViewer) cesiumViewer.useBrowserRecommendedResolution = false;
+      cesiumViewer.resolutionScale = Math.min(window.devicePixelRatio || 1, CESIUM_MAX_RESOLUTION_SCALE);
     }
 
     function activateCesiumGlobe() {
@@ -4627,7 +4638,10 @@
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      if (useCesiumGlobe && cesiumViewer) cesiumViewer.resize();
+      if (useCesiumGlobe && cesiumViewer) {
+        applyCesiumRenderQuality();
+        cesiumViewer.resize();
+      }
       updateMobileViewportOffset();
       syncOverlayLayout();
       if (!mapTestModal.classList.contains("hidden")) renderTilePickerStatus();
