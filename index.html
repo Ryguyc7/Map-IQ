@@ -69,11 +69,13 @@
       position: relative;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       min-height: 560px;
       --topbar-top: 14px;
       --topbar-height: 94px;
       --topbar-gap: 14px;
       --answer-result-height: 88px;
+      --mobile-bottom-lift: 0px;
       background: #000;
       isolation: isolate;
     }
@@ -105,6 +107,7 @@
       display: none;
       animation: sceneIn 760ms ease-out both;
       filter: brightness(1.28) saturate(1.28) contrast(1.04);
+      touch-action: none;
     }
 
     #cesiumGlobe.active {
@@ -129,6 +132,7 @@
     #cesiumGlobe .cesium-viewer,
     #cesiumGlobe .cesium-viewer-cesiumWidgetContainer {
       background: transparent !important;
+      touch-action: none;
     }
 
     #cesiumGlobe .cesium-widget-credits {
@@ -1637,7 +1641,7 @@
 
       .side-panel {
         top: auto;
-        bottom: max(8px, env(safe-area-inset-bottom));
+        bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--mobile-bottom-lift, 0px));
         left: var(--mobile-edge);
         width: calc(100vw - (var(--mobile-edge) * 2));
         min-width: 0;
@@ -2667,6 +2671,10 @@
       moved: false,
       lastX: 0,
       lastY: 0,
+      activePointers: new Map(),
+      pinchDistance: 0,
+      pinchHeight: 30000000,
+      pinching: false,
       controlsReady: false,
       reset: null
     };
@@ -2783,6 +2791,17 @@
       surface.addEventListener("pointerdown", (event) => {
         if (!useCesiumGlobe || event.button !== 0) return;
         cesiumOrbit.reset = null;
+        cesiumOrbit.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (cesiumOrbit.activePointers.size >= 2) {
+          cesiumOrbit.pinching = true;
+          cesiumOrbit.dragging = false;
+          cesiumOrbit.moved = true;
+          cesiumOrbit.pinchDistance = cesiumPointerDistance();
+          cesiumOrbit.pinchHeight = cesiumOrbit.targetHeight;
+          surface.setPointerCapture?.(event.pointerId);
+          event.preventDefault();
+          return;
+        }
         cesiumOrbit.dragging = true;
         cesiumOrbit.moved = false;
         cesiumOrbit.lastX = event.clientX;
@@ -2791,7 +2810,21 @@
       });
 
       surface.addEventListener("pointermove", (event) => {
-        if (!useCesiumGlobe || !cesiumOrbit.dragging) return;
+        if (!useCesiumGlobe) return;
+        if (cesiumOrbit.activePointers.has(event.pointerId)) {
+          cesiumOrbit.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        }
+        if (cesiumOrbit.pinching && cesiumOrbit.activePointers.size >= 2) {
+          const nextDistance = cesiumPointerDistance();
+          if (cesiumOrbit.pinchDistance > 0 && nextDistance > 0) {
+            const zoomRatio = cesiumOrbit.pinchDistance / nextDistance;
+            cesiumOrbit.targetHeight = THREE.MathUtils.clamp(cesiumOrbit.pinchHeight * zoomRatio, 150000, 30000000);
+            cesiumOrbit.moved = true;
+          }
+          event.preventDefault();
+          return;
+        }
+        if (!cesiumOrbit.dragging) return;
         const dx = event.clientX - cesiumOrbit.lastX;
         const dy = event.clientY - cesiumOrbit.lastY;
         if (Math.hypot(dx, dy) > 1) cesiumOrbit.moved = true;
@@ -2804,13 +2837,29 @@
       });
 
       surface.addEventListener("pointerup", (event) => {
-        if (!cesiumOrbit.dragging) return;
-        cesiumOrbit.dragging = false;
+        cesiumOrbit.activePointers.delete(event.pointerId);
+        if (cesiumOrbit.pinching && cesiumOrbit.activePointers.size < 2) {
+          cesiumOrbit.pinching = false;
+          cesiumOrbit.pinchDistance = 0;
+          cesiumOrbit.pinchHeight = cesiumOrbit.targetHeight;
+          const remaining = [...cesiumOrbit.activePointers.values()][0];
+          if (remaining) {
+            cesiumOrbit.dragging = true;
+            cesiumOrbit.lastX = remaining.x;
+            cesiumOrbit.lastY = remaining.y;
+          }
+        } else if (cesiumOrbit.activePointers.size === 0) {
+          cesiumOrbit.dragging = false;
+        }
         surface.releasePointerCapture?.(event.pointerId);
       });
 
-      surface.addEventListener("pointercancel", () => {
-        cesiumOrbit.dragging = false;
+      surface.addEventListener("pointercancel", (event) => {
+        cesiumOrbit.activePointers.delete(event.pointerId);
+        if (cesiumOrbit.activePointers.size === 0) {
+          cesiumOrbit.dragging = false;
+          cesiumOrbit.pinching = false;
+        }
       });
 
       surface.addEventListener("wheel", (event) => {
@@ -2822,6 +2871,12 @@
         cesiumOrbit.targetHeight = nextHeight;
         event.preventDefault();
       }, { passive: false });
+    }
+
+    function cesiumPointerDistance() {
+      const points = [...cesiumOrbit.activePointers.values()];
+      if (points.length < 2) return 0;
+      return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
     }
 
     function cesiumDragDegrees(dx, dy) {
@@ -4573,8 +4628,19 @@
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       if (useCesiumGlobe && cesiumViewer) cesiumViewer.resize();
+      updateMobileViewportOffset();
       syncOverlayLayout();
       if (!mapTestModal.classList.contains("hidden")) renderTilePickerStatus();
+    }
+
+    function updateMobileViewportOffset() {
+      const viewport = window.visualViewport;
+      if (!viewport || window.innerWidth > 760) {
+        app.style.setProperty("--mobile-bottom-lift", "0px");
+        return;
+      }
+      const coveredBottom = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      app.style.setProperty("--mobile-bottom-lift", `${Math.ceil(coveredBottom)}px`);
     }
 
     function animate() {
@@ -4813,6 +4879,11 @@
       });
     });
     window.addEventListener("resize", resize);
+    window.visualViewport?.addEventListener("resize", () => {
+      updateMobileViewportOffset();
+      syncOverlayLayout();
+    });
+    window.visualViewport?.addEventListener("scroll", updateMobileViewportOffset);
 
     renderStartModeGrid();
     initTileTester();
