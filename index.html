@@ -2685,7 +2685,7 @@
     };
     const CESIUM_EARTH_RADIUS_METERS = 6378137;
     const CESIUM_MIN_DRAG_DEGREES_PER_VIEWPORT = 1.5;
-    const CESIUM_MOBILE_MAX_RESOLUTION_SCALE = 1.4;
+    const CESIUM_MOBILE_MAX_RESOLUTION_SCALE = 1.65;
     const CESIUM_DESKTOP_MAX_RESOLUTION_SCALE = 2;
     const cesiumMarkers = [];
 
@@ -2735,8 +2735,8 @@
         cesiumViewer.scene.globe.baseColor = new Cesium.Color(0, 0, 0, 0);
         cesiumViewer.scene.globe.enableLighting = false;
         cesiumViewer.scene.globe.depthTestAgainstTerrain = true;
-        cesiumViewer.scene.globe.maximumScreenSpaceError = window.innerWidth <= 760 ? 2.5 : 1.5;
-        if (cesiumViewer.scene.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = window.innerWidth <= 760;
+        cesiumViewer.scene.globe.maximumScreenSpaceError = window.innerWidth <= 760 ? 1.8 : 1.5;
+        if (cesiumViewer.scene.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = false;
         const controller = cesiumViewer.scene.screenSpaceCameraController;
         controller.enableRotate = false;
         controller.enableTranslate = false;
@@ -2780,8 +2780,8 @@
       const isMobile = isMobileViewport();
       const maxScale = isMobile ? CESIUM_MOBILE_MAX_RESOLUTION_SCALE : CESIUM_DESKTOP_MAX_RESOLUTION_SCALE;
       cesiumViewer.resolutionScale = Math.min(window.devicePixelRatio || 1, maxScale);
-      if (cesiumViewer.scene?.globe) cesiumViewer.scene.globe.maximumScreenSpaceError = isMobile ? 2.5 : 1.5;
-      if (cesiumViewer.scene?.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = isMobile;
+      if (cesiumViewer.scene?.globe) cesiumViewer.scene.globe.maximumScreenSpaceError = isMobile ? 1.8 : 1.5;
+      if (cesiumViewer.scene?.postProcessStages?.fxaa) cesiumViewer.scene.postProcessStages.fxaa.enabled = false;
     }
 
     function activateCesiumGlobe() {
@@ -4703,8 +4703,8 @@
         syncStarsToCesiumCamera();
       } else {
         controls.update();
+        renderer.render(scene, camera);
       }
-      renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
 
